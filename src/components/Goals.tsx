@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Target, CheckCircle, Circle } from 'lucide-react';
 
 const Goals = () => {
