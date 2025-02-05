@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Clock, Book, Trash2, Plus } from 'lucide-react';
+import { Clock, Trash2, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,7 +36,7 @@ const StudyLog: React.FC<StudyLogProps> = ({ focusNodes }) => {
   const [newLog, setNewLog] = useState<Partial<StudyLog>>({});
   const [isAddingLog, setIsAddingLog] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchStudyLogs();

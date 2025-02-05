@@ -1,11 +1,11 @@
+
 import { useState } from 'react';
-import { Timer, BarChart3, Settings, Layout, Target, BookOpen, UserCircle } from 'lucide-react';
+import { Timer, BarChart3, Layout, Target, BookOpen, UserCircle } from 'lucide-react';
 import PomodoroModule from './components/PomodoroModule';
 import StudyLog from './components/StudyLog';
 import Analytics from './components/Analytics';
 import Goals from './components/Goals';
 import { Auth } from './components/Auth';
-import { Profile } from './components/Profile';
 import { useAuth } from './context/AuthContext';
 import SettingsPage from './components/SettingsPage';
 
