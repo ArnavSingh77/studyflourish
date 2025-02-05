@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Timer, BarChart3, Settings, Layout, Target, BookOpen } from 'lucide-react';
+import { Timer, BarChart3, Settings, Layout, Target, BookOpen, UserCircle } from 'lucide-react';
 import PomodoroModule from './components/PomodoroModule';
 import StudyLog from './components/StudyLog';
 import Analytics from './components/Analytics';
 import Goals from './components/Goals';
+import { Auth } from './components/Auth';
+import { Profile } from './components/Profile';
+import { useAuth } from './context/AuthContext';
 
 interface Subject {
   id: string;
@@ -23,17 +26,31 @@ interface FocusNode {
 function App() {
   const [activeTab, setActiveTab] = useState('pomodoro');
   const [focusNodes, setFocusNodes] = useState<FocusNode[]>([]);
+  const { user, loading } = useAuth();
 
   const navigation = [
     { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
     { id: 'log', label: 'Study Log', icon: BookOpen },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'goals', label: 'Goals', icon: Target },
+    { id: 'profile', label: 'Profile', icon: UserCircle },
   ];
 
   const handleAddFocusNode = (focusNode: FocusNode) => {
     setFocusNodes(prev => [...prev, focusNode]);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,7 +119,12 @@ function App() {
         {activeTab === 'analytics' && (
           <Analytics focusNodes={focusNodes} />
         )}
-        {activeTab === 'goals' && <Goals />}
+        {activeTab === 'goals' && (
+          <Goals />
+        )}
+        {activeTab === 'profile' && (
+          <Profile />
+        )}
       </main>
     </div>
   );
