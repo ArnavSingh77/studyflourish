@@ -1,19 +1,28 @@
-
 import { useState } from 'react';
 import { Timer, BarChart3, Settings, Layout, Target, BookOpen } from 'lucide-react';
 import PomodoroModule from './components/PomodoroModule';
 import StudyLog from './components/StudyLog';
 import Analytics from './components/Analytics';
 import Goals from './components/Goals';
-import Auth from './components/Auth';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import type { FocusNode } from './types';
-import { supabase } from './integrations/supabase/client';
 
-function AppContent() {
+interface Subject {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface FocusNode {
+  id: string;
+  subject: Subject;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  mode: 'pomodoro' | 'stopwatch';
+}
+
+function App() {
   const [activeTab, setActiveTab] = useState('pomodoro');
   const [focusNodes, setFocusNodes] = useState<FocusNode[]>([]);
-  const { user, loading } = useAuth();
 
   const navigation = [
     { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
@@ -25,18 +34,6 @@ function AppContent() {
   const handleAddFocusNode = (focusNode: FocusNode) => {
     setFocusNodes(prev => [...prev, focusNode]);
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Auth />;
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,13 +63,7 @@ function AppContent() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => supabase.auth.signOut()} 
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Sign out
-              </button>
+            <div className="flex items-center">
               <button className="p-2 rounded-full hover:bg-gray-100">
                 <Settings className="h-6 w-6 text-textColor" />
               </button>
@@ -114,14 +105,6 @@ function AppContent() {
         {activeTab === 'goals' && <Goals />}
       </main>
     </div>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
   );
 }
 
