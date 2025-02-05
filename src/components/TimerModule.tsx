@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, BookOpen } from 'lucide-react';
 
 const TimerModule = () => {
-  const [time, setTime] = useState(25 * 60); // 25 minutes in seconds
+  const [time, setTime] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [subject, setSubject] = useState('');
 
   useEffect(() => {
-    let interval: number | undefined;
+    let interval: NodeJS.Timeout | undefined;
 
     if (isActive && time > 0) {
       interval = setInterval(() => {
@@ -15,7 +15,9 @@ const TimerModule = () => {
       }, 1000);
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isActive, time]);
 
   const toggleTimer = () => {

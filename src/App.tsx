@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Timer, BarChart3, Settings, Layout, Target, BookOpen } from 'lucide-react';
 import PomodoroModule from './components/PomodoroModule';
 import StudyLog from './components/StudyLog';

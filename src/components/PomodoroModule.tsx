@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, BookOpen, Clock, Timer as TimerIcon, Plus, X, ChevronDown, Check } from 'lucide-react';
+import { Play, Pause, Plus, X, ChevronDown, Check, Clock, Timer as TimerIcon } from 'lucide-react';
 
 type TimerMode = 'pomodoro' | 'stopwatch';
 
@@ -48,7 +48,7 @@ const PomodoroModule: React.FC<PomodoroModuleProps> = ({ onAddFocusNode }) => {
   const [isStudySessionInProgress, setIsStudySessionInProgress] = useState(false);
 
   useEffect(() => {
-    let interval: number | undefined;
+    let interval: NodeJS.Timeout | undefined;
 
     if (isActive) {
       if (!sessionStartTime) {
@@ -70,7 +70,9 @@ const PomodoroModule: React.FC<PomodoroModuleProps> = ({ onAddFocusNode }) => {
       }, 1000);
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isActive, mode]);
 
   const handleSessionEnd = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Clock, Book } from 'lucide-react';
+import { Clock, Book } from 'lucide-react';
 
 interface Subject {
   id: string;
@@ -24,7 +24,6 @@ const StudyLog: React.FC<StudyLogProps> = ({ focusNodes }) => {
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
     
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
