@@ -7,6 +7,7 @@ import Goals from './components/Goals';
 import { Auth } from './components/Auth';
 import { Profile } from './components/Profile';
 import { useAuth } from './context/AuthContext';
+import SettingsPage from './components/SettingsPage';
 
 interface Subject {
   id: string;
@@ -33,7 +34,6 @@ function App() {
     { id: 'log', label: 'Study Log', icon: BookOpen },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'goals', label: 'Goals', icon: Target },
-    { id: 'profile', label: 'Profile', icon: UserCircle },
   ];
 
   const handleAddFocusNode = (focusNode: FocusNode) => {
@@ -81,8 +81,11 @@ function App() {
               ))}
             </div>
             <div className="flex items-center">
-              <button className="p-2 rounded-full hover:bg-gray-100">
-                <Settings className="h-6 w-6 text-textColor" />
+              <button 
+                onClick={() => setActiveTab('settings')}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <UserCircle className="h-6 w-6 text-textColor" />
               </button>
             </div>
           </div>
@@ -103,6 +106,14 @@ function App() {
               <item.icon className="h-6 w-6" />
             </button>
           ))}
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`p-2 rounded-lg ${
+              activeTab === 'settings' ? 'text-primary bg-primary/10' : 'text-textColor'
+            }`}
+          >
+            <UserCircle className="h-6 w-6" />
+          </button>
         </div>
       </div>
 
@@ -122,8 +133,8 @@ function App() {
         {activeTab === 'goals' && (
           <Goals />
         )}
-        {activeTab === 'profile' && (
-          <Profile />
+        {activeTab === 'settings' && (
+          <SettingsPage />
         )}
       </main>
     </div>

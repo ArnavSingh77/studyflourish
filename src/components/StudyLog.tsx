@@ -1,10 +1,21 @@
-import React from 'react';
-import { Clock, Book } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, Book, Trash2, Plus } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 interface Subject {
   id: string;
   name: string;
   color: string;
+}
+
+interface StudyLog {
+  id?: string;
+  user_id: string;
+  subject: string;
+  duration: number;
+  notes?: string;
+  created_at?: string;
 }
 
 interface FocusNode {
@@ -21,12 +32,99 @@ interface StudyLogProps {
 }
 
 const StudyLog: React.FC<StudyLogProps> = ({ focusNodes }) => {
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+  const [studyLogs, setStudyLogs] = useState<StudyLog[]>([]);
+  const [newLog, setNewLog] = useState<Partial<StudyLog>>({});
+  const [isAddingLog, setIsAddingLog] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user, profile } = useAuth();
+
+  useEffect(() => {
+    fetchStudyLogs();
+  }, [user?.id]);
+
+  const fetchStudyLogs = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('study_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching study logs:', error);
+    } else {
+      setStudyLogs(data || []);
+    }
+    setLoading(false);
+  };
+
+  const addStudyLogFromFocusNode = async (focusNode: FocusNode) => {
+    if (!user) return;
+
+    const newStudyLog: StudyLog = {
+      user_id: user.id,
+      subject: focusNode.subject.name,
+      duration: focusNode.duration,
+      notes: `${focusNode.mode} session`
+    };
+
+    const { data, error } = await supabase
+      .from('study_logs')
+      .insert(newStudyLog)
+      .select();
+
+    if (error) {
+      console.error('Error adding study log:', error);
+    } else if (data) {
+      setStudyLogs([...studyLogs, data[0]]);
+    }
+  };
+
+  const addManualStudyLog = async () => {
+    if (!user || !newLog.subject || !newLog.duration) return;
+
+    const studyLog: StudyLog = {
+      user_id: user.id,
+      subject: newLog.subject,
+      duration: newLog.duration,
+      notes: newLog.notes
+    };
+
+    const { data, error } = await supabase
+      .from('study_logs')
+      .insert(studyLog)
+      .select();
+
+    if (error) {
+      console.error('Error adding manual study log:', error);
+    } else if (data) {
+      setStudyLogs([data[0], ...studyLogs]);
+      setNewLog({});
+      setIsAddingLog(false);
+    }
+  };
+
+  const deleteStudyLog = async (logId: string) => {
+    const { error } = await supabase
+      .from('study_logs')
+      .delete()
+      .eq('id', logId);
+
+    if (error) {
+      console.error('Error deleting study log:', error);
+    } else {
+      setStudyLogs(studyLogs.filter(log => log.id !== logId));
+    }
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
     
     if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+      return `${hours}h ${remainingMinutes}m`;
     }
     return `${minutes}m`;
   };
@@ -46,52 +144,127 @@ const StudyLog: React.FC<StudyLogProps> = ({ focusNodes }) => {
         <h2 className="text-2xl font-poppins font-semibold text-textColor">
           Study Log
         </h2>
-        <button className="btn-primary">
+        <button 
+          onClick={() => setIsAddingLog(!isAddingLog)}
+          className="flex items-center bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="mr-2 h-5 w-5" />
           Add Entry
         </button>
       </div>
-      
-      <div className="space-y-4">
-        {focusNodes.length === 0 ? (
-          <div className="text-center text-gray-500">
-            No study sessions logged yet
+
+      {isAddingLog && (
+        <div className="bg-white shadow rounded-lg p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Subject</label>
+            <input
+              type="text"
+              value={newLog.subject || ''}
+              onChange={(e) => setNewLog({...newLog, subject: e.target.value})}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+              placeholder="Enter subject"
+            />
           </div>
-        ) : (
-          // Sort focus nodes by startTime in descending order (latest first)
-          [...focusNodes]
-            .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-            .map((node) => (
-            <div 
-              key={node.id} 
-              className="bg-white shadow-custom rounded-lg p-4 flex items-center space-x-4"
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Duration (minutes)</label>
+            <input
+              type="number"
+              value={newLog.duration || ''}
+              onChange={(e) => setNewLog({...newLog, duration: parseInt(e.target.value)})}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+              placeholder="Enter study duration"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Notes (optional)</label>
+            <textarea
+              value={newLog.notes || ''}
+              onChange={(e) => setNewLog({...newLog, notes: e.target.value})}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+              placeholder="Add any additional notes"
+            />
+          </div>
+          <div className="flex space-x-4">
+            <button 
+              onClick={addManualStudyLog}
+              className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
             >
-              <div 
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: node.subject.color + '20', color: node.subject.color }}
-              >
-                <Book className="w-5 h-5" />
+              Save Log
+            </button>
+            <button 
+              onClick={() => setIsAddingLog(false)}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-6">Loading study logs...</div>
+      ) : studyLogs.length === 0 ? (
+        <div className="text-center py-6 text-gray-500">
+          No study logs yet. Start tracking your study sessions!
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {studyLogs.map((log) => (
+            <div 
+              key={log.id} 
+              className="bg-white shadow rounded-lg p-4 flex justify-between items-center"
+            >
+              <div>
+                <h3 className="font-semibold text-lg">{log.subject}</h3>
+                <p className="text-gray-600">{log.notes}</p>
+                <p className="text-sm text-gray-500">
+                  {formatDate(log.created_at || new Date().toISOString())}
+                </p>
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold text-textColor">{node.subject.name}</h3>
-                  <span className="text-sm text-gray-500">
-                    {formatDate(node.startTime)}
-                  </span>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center text-gray-700">
+                  <Clock className="mr-2 h-5 w-5" />
+                  {formatDuration(log.duration)}
                 </div>
-                <div className="flex justify-between items-center mt-1">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Clock className="w-4 h-4" />
-                    <span>{formatDuration(node.duration)}</span>
-                    <span className="ml-2 px-2 py-0.5 bg-gray-100 rounded-full text-xs">
-                      {node.mode === 'pomodoro' ? 'Pomodoro' : 'Stopwatch'}
-                    </span>
-                  </div>
-                </div>
+                <button 
+                  onClick={() => deleteStudyLog(log.id!)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* Automatically add logs from Pomodoro sessions */}
+      {focusNodes.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-4">Recent Pomodoro Sessions</h3>
+          <div className="space-y-2">
+            {focusNodes.map((node) => (
+              <div 
+                key={node.id} 
+                className="bg-gray-50 rounded-lg p-3 flex justify-between items-center"
+              >
+                <div>
+                  <span className="font-medium">{node.subject.name}</span>
+                  <span className="ml-2 text-gray-600">
+                    {formatDuration(node.duration)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => addStudyLogFromFocusNode(node)}
+                  className="text-primary hover:underline"
+                >
+                  Add to Study Log
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
