@@ -8,6 +8,7 @@ import Goals from './components/Goals';
 import Auth from './components/Auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import type { FocusNode } from './types';
+import { supabase } from './integrations/supabase/client';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('pomodoro');
