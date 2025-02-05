@@ -58,7 +58,10 @@ const StudyLog: React.FC<StudyLogProps> = ({ focusNodes }) => {
             No study sessions logged yet
           </div>
         ) : (
-          focusNodes.map((node) => (
+          // Sort focus nodes by startTime in descending order (latest first)
+          [...focusNodes]
+            .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+            .map((node) => (
             <div 
               key={node.id} 
               className="bg-white shadow-custom rounded-lg p-4 flex items-center space-x-4"
