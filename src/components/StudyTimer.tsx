@@ -11,7 +11,7 @@ const StudyTimer = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    let interval: number;
+    let interval: NodeJS.Timeout | undefined;
 
     if (isActive) {
       interval = setInterval(() => {
@@ -19,7 +19,9 @@ const StudyTimer = () => {
       }, 1000);
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isActive]);
 
   const formatTime = (seconds: number) => {
